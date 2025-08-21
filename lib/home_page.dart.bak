@@ -1,0 +1,477 @@
+import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'song_data.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+  String _selectedCategory = 'All';
+
+  final List<String> _categories = [
+    'All',
+    'Pops',
+    'K-Pops',
+    'Lofi',
+  ];
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  String? _currentlyPlayingId;
+
+  List<Song> _filteredSongs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredSongs = List.from(songsList);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Widget _buildNowPlayingBar() {
+    if (_currentlyPlayingId == null) return const SizedBox.shrink();
+    
+    final currentSong = _filteredSongs.firstWhere((song) => song.id == _currentlyPlayingId);
+    
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                currentSong.coverUrl,
+                width: 44,
+                height: 44,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  currentSong.title,
+                  style: const TextStyle(
+                    fontFamily: 'Daydream',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  currentSong.artist,
+                  style: const TextStyle(
+                    fontFamily: 'Daydream',
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              _isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              if (_isPlaying) {
+                _audioPlayer.pause();
+              } else {
+                _audioPlayer.resume();
+              }
+              setState(() {
+                _isPlaying = !_isPlaying;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_selectedIndex == 1) {
+      // Saved/Favorites view
+      final favoritesSongs = _filteredSongs.where((song) => song.isFavorite).toList();
+      return _buildSongGrid(favoritesSongs);
+    } else {
+      // Home view
+      return _buildSongGrid(_filteredSongs);
+    }
+  }
+
+  Widget _buildSongGrid(List<Song> songs) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.8,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: songs.length,
+      itemBuilder: (context, index) {
+        final song = songs[index];
+        final isCurrentSong = song.id == _currentlyPlayingId;
+        
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    height: 140,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      image: DecorationImage(
+                        image: NetworkImage(song.coverUrl),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: IconButton(
+                      icon: Icon(
+                        song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: song.isFavorite ? Colors.red : Colors.white,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          song.isFavorite = !song.isFavorite;
+                        });
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          if (isCurrentSong && _isPlaying) {
+                            await _audioPlayer.pause();
+                            setState(() => _isPlaying = false);
+                          } else if (isCurrentSong && !_isPlaying) {
+                            await _audioPlayer.resume();
+                            setState(() => _isPlaying = true);
+                          } else {
+                            await _audioPlayer.stop();
+                            await _audioPlayer.play(UrlSource(song.url));
+                            setState(() {
+                              _currentlyPlayingId = song.id;
+                              _isPlaying = true;
+                            });
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            color: Colors.black26,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              isCurrentSong && _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                              size: 50,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      song.title,
+                      style: const TextStyle(
+                        fontFamily: 'Daydream',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      song.artist,
+                      style: const TextStyle(
+                        fontFamily: 'Daydream',
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/pixel_mus.png',
+              height: 55,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Rhythmo',
+              style: TextStyle(
+                fontFamily: 'Daydream',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Column(
+            children: <Widget>[
+              if (_selectedIndex == 0) // Only show filter bar in home view
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      for (String category in _categories)
+                        FilterChip(
+                          selected: _selectedCategory == category,
+                          label: Text(
+                            category,
+                            style: TextStyle(
+                              fontFamily: 'Daydream',
+                              color: _selectedCategory == category ? Colors.black : Colors.black54,
+                            ),
+                          ),
+                          onSelected: (bool selected) {
+                            setState(() {
+                              _selectedCategory = category;
+                              if (_selectedCategory == 'All') {
+                                _filteredSongs = List.from(songsList);
+                              } else {
+                                _filteredSongs = songsList
+                                    .where((song) => song.category == _selectedCategory)
+                                    .toList();
+                              }
+                            });
+                          },
+                          backgroundColor: const Color(0xFFFEFCBF), // Light yellow
+                          selectedColor: const Color(0xFFEFD81D), // Darker yellow for selected state
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: _buildContent(),
+              ),
+              if (_currentlyPlayingId != null)
+                const SizedBox(height: 60), // Space for the now playing bar
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildNowPlayingBar(),
+          ),
+        ],
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.8,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: _filteredSongs.length,
+              itemBuilder: (context, index) {
+                final song = _filteredSongs[index];
+                final isCurrentSong = song.id == _currentlyPlayingId;
+                
+                return Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            height: 140,
+                            decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                              image: DecorationImage(
+                                image: NetworkImage(song.coverUrl),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  if (isCurrentSong && _isPlaying) {
+                                    await _audioPlayer.pause();
+                                    setState(() => _isPlaying = false);
+                                  } else if (isCurrentSong && !_isPlaying) {
+                                    await _audioPlayer.resume();
+                                    setState(() => _isPlaying = true);
+                                  } else {
+                                    await _audioPlayer.stop();
+                                    await _audioPlayer.play(UrlSource(song.url));
+                                    setState(() {
+                                      _currentlyPlayingId = song.id;
+                                      _isPlaying = true;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                    color: Colors.black26,
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      isCurrentSong && _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                      size: 50,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              song.title,
+                              style: const TextStyle(
+                                fontFamily: 'Daydream',
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              song.artist,
+                              style: const TextStyle(
+                                fontFamily: 'Daydream',
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        selectedLabelStyle: const TextStyle(fontFamily: 'Daydream'),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Daydream'),
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(_selectedIndex == 1 ? Icons.favorite : Icons.favorite_border),
+            label: 'Saved',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.mic),
+            label: 'Artists',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
