@@ -1,32 +1,67 @@
+import 'sign_up_page.dart';
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'simple_user_db.dart';
+// import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+// import 'package:flutter_line_sdk/flutter_line_sdk.dart'; // Uncomment if you set up Line SDK
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
+  void _handleGoogleSignIn() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Google login placeholder'), backgroundColor: Colors.red),
+    );
+  }
+
+  void _handleFacebookSignIn() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Facebook login placeholder'), backgroundColor: Colors.blue),
+    );
+  }
+
+  void _handleLineSignIn() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Line login placeholder'), backgroundColor: Colors.green),
+    );
+  }
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  late SimpleUserDatabase _db;
+  bool _dbLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _db = SimpleUserDatabase();
+    _db.load().then((_) {
+      setState(() {
+        _dbLoaded = true;
+      });
+    });
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _handleLogin() {
+    if (!_dbLoaded) return;
     if (_formKey.currentState!.validate()) {
-      final email = _emailController.text;
+      final username = _usernameController.text;
       final password = _passwordController.text;
-
-      if (email == 'admin' && password == 'admin') {
-        // Navigate to home page
+      if (_db.validateUser(username, password)) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
@@ -34,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Invalid credentials. Use admin/admin'),
+            content: Text('Invalid credentials.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -108,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
-                      controller: _emailController,
+                      controller: _usernameController,
                       style: const TextStyle(
                         fontFamily: 'Daydream',
                         color: Colors.white,
@@ -125,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                           255,
                           255,
                           255,
-                        ), // White with 50% opacity
+                        ),
                         border: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
@@ -135,9 +170,8 @@ class _LoginPageState extends State<LoginPage> {
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
-                        prefixIcon: Icon(Icons.email, color: Colors.white),
+                        prefixIcon: Icon(Icons.person, color: Colors.white),
                       ),
-                      keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your username';
@@ -159,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                           color: Colors.white,
                         ),
                         filled: true,
-                        fillColor: Color(0x80FFFFFF), // White with 50% opacity
+                        fillColor: Color(0x80FFFFFF),
                         border: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
@@ -192,6 +226,73 @@ class _LoginPageState extends State<LoginPage> {
                           fontSize: 20
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignUpPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Go back to Sign Up',
+                        style: TextStyle(
+                          fontFamily: 'Daydream',
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 240, 32, 153),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: Image.asset('assets/images/logo.png', height: 24),
+                            label: const Text(
+                              'Google',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            onPressed: _handleGoogleSignIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.facebook, color: Colors.white),
+                            label: const Text(
+                              'Facebook',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            onPressed: _handleFacebookSignIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1877F3),
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.chat_bubble, color: Colors.white),
+                            label: const Text(
+                              'Line',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            onPressed: _handleLineSignIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF06C755),
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

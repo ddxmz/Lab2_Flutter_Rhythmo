@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'song_data.dart';
+import 'login_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -181,6 +182,27 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                     ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                ),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(fontSize: 18, fontFamily: 'Daydream'),
+                ),
+              ),
             ),
           ],
         ),

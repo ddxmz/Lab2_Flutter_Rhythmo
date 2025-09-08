@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'song_data.dart';
@@ -127,7 +126,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildStarRatingBar() {
     if (_currentlyPlayingId == null) return const SizedBox.shrink();
 
-    return Container(
+    return SizedBox(
       height: 60,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -359,8 +358,8 @@ class _HomePageState extends State<HomePage> {
                           }
                         },
                         child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.vertical(
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(20)),
                             color: Colors.black26,
                           ),
@@ -495,7 +494,7 @@ class _HomePageState extends State<HomePage> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search by title or artist...',
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
