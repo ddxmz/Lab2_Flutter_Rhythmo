@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'sign_up_page.dart';
-import 'package:firebase_core/firebase_core.dart' as fcore;
-import 'firebase_options.dart' as fopts;
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await fcore.Firebase.initializeApp(
-    options: fopts.DefaultFirebaseOptions.currentPlatform,
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MyApp());
 }
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           labelSmall: TextStyle(fontFamily: 'Daydream'),
         ),
       ),
-  home: const SignUpPage(),
+      home: const SignUpPage(),
     );
   }
 }

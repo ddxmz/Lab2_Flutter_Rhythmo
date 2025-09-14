@@ -17,21 +17,28 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   void _handleGoogleSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google login placeholder'), backgroundColor: Colors.red),
+      const SnackBar(
+          content: Text('Google login placeholder'),
+          backgroundColor: Colors.red),
     );
   }
 
   void _handleFacebookSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Facebook login placeholder'), backgroundColor: Colors.blue),
+      const SnackBar(
+          content: Text('Facebook login placeholder'),
+          backgroundColor: Colors.blue),
     );
   }
 
   void _handleLineSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Line login placeholder'), backgroundColor: Colors.green),
+      const SnackBar(
+          content: Text('Line login placeholder'),
+          backgroundColor: Colors.green),
     );
   }
+
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -87,7 +94,6 @@ class _LoginPageState extends State<LoginPage> {
               image: DecorationImage(
                 image: AssetImage("assets/images/8bit_background3.jpg"),
                 fit: BoxFit.cover,
-                
               ),
             ),
             width: double.infinity,
@@ -105,15 +111,20 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('assets/images/pixel_heart.png', height: 40),
+                        Image.asset('assets/images/pixel_heart.png',
+                            height: 40),
                         const SizedBox(width: 10),
-                        Image.asset('assets/images/pixel_heart.png', height: 40),
+                        Image.asset('assets/images/pixel_heart.png',
+                            height: 40),
                         const SizedBox(width: 10),
-                        Image.asset('assets/images/pixel_heart.png', height: 40),
+                        Image.asset('assets/images/pixel_heart.png',
+                            height: 40),
                         const SizedBox(width: 10),
-                        Image.asset('assets/images/pixel_heart.png', height: 40),
+                        Image.asset('assets/images/pixel_heart.png',
+                            height: 40),
                         const SizedBox(width: 10),
-                        Image.asset('assets/images/pixel_heart.png', height: 40),
+                        Image.asset('assets/images/pixel_heart.png',
+                            height: 40),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -129,7 +140,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 20),
                       child: const Text(
                         'Welcome Back to Rhythmo 🎧',
                         style: TextStyle(
@@ -221,10 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: const Text(
                         '>>> Login',
-                        style: TextStyle(
-                          fontFamily: 'Daydream',
-                          fontSize: 20
-                        ),
+                        style: TextStyle(fontFamily: 'Daydream', fontSize: 20),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -232,7 +241,8 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const SignUpPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const SignUpPage()),
                         );
                       },
                       child: const Text(
@@ -250,45 +260,72 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            icon: Image.asset('assets/images/logo.png', height: 24),
+                            icon: const Icon(Icons.g_mobiledata,
+                                color: Colors.black, size: 24),
                             label: const Text(
                               'Google',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: _handleGoogleSignIn,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            icon: const Icon(Icons.facebook, color: Colors.white),
+                            icon: const Icon(Icons.facebook,
+                                color: Colors.white, size: 24),
                             label: const Text(
                               'Facebook',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: _handleFacebookSignIn,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1877F3),
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            icon: const Icon(Icons.chat_bubble, color: Colors.white),
+                            icon: const Icon(Icons.chat,
+                                color: Colors.white, size: 24),
                             label: const Text(
                               'Line',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: _handleLineSignIn,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF06C755),
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
