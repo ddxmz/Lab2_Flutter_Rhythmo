@@ -1,11 +1,13 @@
 import 'sign_up_page.dart';
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import 'simple_user_db.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:google_sign_in/google_sign_in.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 // import 'package:flutter_line_sdk/flutter_line_sdk.dart'; // Uncomment if you set up Line SDK
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,73 +17,90 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } on FirebaseAuthException catch (e) {
+        String message = 'Login failed.';
+        if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+          message = 'Invalid credentials.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login failed.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   void _handleGoogleSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Google login placeholder'),
-          backgroundColor: Colors.red),
+        content: Text('Google login placeholder'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
   void _handleFacebookSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Facebook login placeholder'),
-          backgroundColor: Colors.blue),
+        content: Text('Facebook login placeholder'),
+        backgroundColor: Colors.blue,
+      ),
     );
   }
 
   void _handleLineSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Line login placeholder'),
-          backgroundColor: Colors.green),
+        content: Text('Line login placeholder'),
+        backgroundColor: Colors.green,
+      ),
     );
-  }
-
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  late SimpleUserDatabase _db;
-  bool _dbLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _db = SimpleUserDatabase();
-    _db.load().then((_) {
-      setState(() {
-        _dbLoaded = true;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _handleLogin() {
-    if (!_dbLoaded) return;
-    if (_formKey.currentState!.validate()) {
-      final username = _usernameController.text;
-      final password = _passwordController.text;
-      if (_db.validateUser(username, password)) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid credentials.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -155,24 +174,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
-                      controller: _usernameController,
+                      controller: _emailController,
                       style: const TextStyle(
                         fontFamily: 'Daydream',
                         color: Colors.white,
                       ),
                       decoration: const InputDecoration(
-                        labelText: 'Username',
+                        labelText: 'Email',
                         labelStyle: TextStyle(
                           fontFamily: 'Daydream',
                           color: Colors.white,
                         ),
                         filled: true,
-                        fillColor: Color.fromARGB(
-                          122,
-                          255,
-                          255,
-                          255,
-                        ),
+                        fillColor: Color.fromARGB(122, 255, 255, 255),
                         border: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
@@ -182,11 +196,14 @@ class _LoginPageState extends State<LoginPage> {
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
-                        prefixIcon: Icon(Icons.person, color: Colors.white),
+                        prefixIcon: Icon(Icons.email, color: Colors.white),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your username';
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                          return 'Please enter a valid email';
                         }
                         return null;
                       },
@@ -227,14 +244,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 38),
                     ElevatedButton(
-                      onPressed: _handleLogin,
+                      onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                       ),
-                      child: const Text(
-                        '>>> Login',
-                        style: TextStyle(fontFamily: 'Daydream', fontSize: 20),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text(
+                              '>>> Login',
+                              style: TextStyle(fontFamily: 'Daydream', fontSize: 20),
+                            ),
                     ),
                     const SizedBox(height: 12),
                     TextButton(

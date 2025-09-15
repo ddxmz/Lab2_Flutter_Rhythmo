@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'simple_user_db.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -18,19 +20,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  late SimpleUserDatabase _db;
-  bool _dbLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-  _db = SimpleUserDatabase();
-    _db.load().then((_) {
-      setState(() {
-        _dbLoaded = true;
-      });
-    });
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -38,30 +28,54 @@ class _SignUpPageState extends State<SignUpPage> {
     _surnameController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
-  _phoneController.dispose();
-  _passwordController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-
-
   Future<void> _handleSignUp() async {
-    if (!_dbLoaded) return;
     if (_formKey.currentState!.validate()) {
-      final firstname = _firstnameController.text;
-      final surname = _surnameController.text;
-      final username = _usernameController.text;
-      final email = _emailController.text;
-      final password = _passwordController.text;
-      final success = await _db.addUser(
-        username: username,
-        password: password,
-        firstname: firstname,
-        surname: surname,
-        email: email,
-      );
-      if (success) {
+      setState(() {
+        _isLoading = true;
+      });
+      final firstname = _firstnameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final username = _usernameController.text.trim();
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      final phone = _phoneController.text.trim();
+      try {
+        // Check if username already exists in Firestore
+        final usernameQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .get();
+        if (usernameQuery.docs.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Username already exists.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        // Create user with Firebase Auth
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        // Add user info to Firestore
+        await FirebaseFirestore.instance.collection('users').add({
+          'firstname': firstname,
+          'surname': surname,
+          'username': username,
+          'email': email,
+          'phone': phone,
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Sign up successful! Please log in.'),
@@ -73,18 +87,37 @@ class _SignUpPageState extends State<SignUpPage> {
         _usernameController.clear();
         _emailController.clear();
         _passwordController.clear();
-        // Navigate to login page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      } else {
+        _confirmPasswordController.clear();
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.pop(context);
+      } on FirebaseAuthException catch (e) {
+        String message = 'Sign up failed.';
+        if (e.code == 'email-already-in-use') {
+          message = 'Email already in use.';
+        } else if (e.code == 'weak-password') {
+          message = 'Password is too weak.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Username already exists.'),
+          SnackBar(
+            content: Text(message),
             backgroundColor: Colors.red,
           ),
         );
+        setState(() {
+          _isLoading = false;
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sign up failed.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -379,17 +412,23 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 38),
                     ElevatedButton(
-                      onPressed: _dbLoaded ? _handleSignUp : null,
+                      onPressed: _isLoading ? null : _handleSignUp,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                       ),
-                      child: const Text(
-                        '>>> Sign Up',
-                        style: TextStyle(
-                          fontFamily: 'Daydream',
-                          fontSize: 20,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text(
+                              '>>> Sign Up',
+                              style: TextStyle(
+                                fontFamily: 'Daydream',
+                                fontSize: 20,
+                              ),
+                            ),
                     ),
                   ],
                 ),
