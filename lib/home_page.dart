@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'song_data.dart';
 import 'profile_page.dart';
+import 'online_music_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
     'All',
     'Pops',
     'K-Pops',
+    'Online Music',
   ];
 
   @override
@@ -359,8 +361,8 @@ class _HomePageState extends State<HomePage> {
                         },
                         child: Container(
                           decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(20)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
                             color: Colors.black26,
                           ),
                           child: Center(
@@ -524,9 +526,19 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               onSelected: (bool selected) {
-                                setState(() {
-                                  _selectedCategory = category;
-                                });
+                                if (category == 'Online Music') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const OnlineMusicPage(),
+                                    ),
+                                  );
+                                } else {
+                                  setState(() {
+                                    _selectedCategory = category;
+                                  });
+                                }
                               },
                               backgroundColor:
                                   const Color(0xFFFEFCBF), // Light yellow
